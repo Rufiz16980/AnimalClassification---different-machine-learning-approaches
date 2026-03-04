@@ -1,0 +1,74 @@
+# ----------------------
+# Python / venv
+# ----------------------
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.ipynb_checkpoints/
+.python-version
+
+# ----------------------
+# OS / editor noise
+# ----------------------
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# ----------------------
+# Data (DO NOT COMMIT)
+# ----------------------
+data/datasets_raw/
+data/prepared/
+data/processed/
+data/augmented/
+data/_duplicates_quarantine/
+data/splits/**/images/
+data/**/*.zip
+data/**/*.tar
+data/**/*.gz
+
+# If you decide to commit split CSVs, keep them tracked:
+!data/splits/**/train.csv
+!data/splits/**/val.csv
+!data/splits/**/test.csv
+!data/splits/**/classes.json
+!data/splits/**/README.md
+
+# ----------------------
+# Models / training artifacts
+# ----------------------
+models/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.engine
+*.tflite
+*.pkl
+*.joblib
+
+# ----------------------
+# Experiment tracking
+# ----------------------
+mlruns/
+mlartifacts/
+
+# ----------------------
+# Reports (keep small metrics, ignore big images if desired)
+# ----------------------
+reports/figures/
+reports/**/*.png
+reports/**/*.jpg
+reports/**/*.jpeg
+
+# keep metrics json/csv if you want:
+!reports/metrics/
+!reports/metrics/**/*.json
+!reports/metrics/**/*.csv

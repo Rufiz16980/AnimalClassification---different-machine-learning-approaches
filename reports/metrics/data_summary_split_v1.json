@@ -1,0 +1,51 @@
+{
+  "dataset_total": 62659,
+  "counts_original": {
+    "cats": 23693,
+    "dogs": 22894,
+    "wildlife": 16072
+  },
+  "counts_train": {
+    "cats": 18954,
+    "dogs": 18315,
+    "wildlife": 12858
+  },
+  "counts_val": {
+    "cats": 2369,
+    "dogs": 2290,
+    "wildlife": 1607
+  },
+  "counts_test": {
+    "cats": 2370,
+    "dogs": 2289,
+    "wildlife": 1607
+  },
+  "ratios": {
+    "original": {
+      "cats": 0.3781260473355783,
+      "dogs": 0.3653744873042979,
+      "wildlife": 0.25649946536012386
+    },
+    "train": {
+      "cats": 0.3781195762762583,
+      "dogs": 0.36537195523370636,
+      "wildlife": 0.25650846849003534
+    },
+    "val": {
+      "cats": 0.3780721353335461,
+      "dogs": 0.3654644111075646,
+      "wildlife": 0.2564634535588892
+    },
+    "test": {
+      "cats": 0.3782317267794446,
+      "dogs": 0.3653048196616661,
+      "wildlife": 0.2564634535588892
+    }
+  },
+  "split_version": "split_v1",
+  "seed": 42,
+  "paths": {
+    "prepared_dir": "f:/Projects/AnimalClassification/data/prepared",
+    "split_dir": "f:/Projects/AnimalClassification/data/splits/split_v1"
+  }
+}
