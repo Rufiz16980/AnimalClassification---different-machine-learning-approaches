@@ -72,3 +72,14 @@ reports/**/*.jpeg
 !reports/metrics/
 !reports/metrics/**/*.json
 !reports/metrics/**/*.csv
+
+
+# ----------------------
+# Notebook-local artifacts (accidental)
+# ----------------------
+notebooks/mlruns/
+notebooks/mlartifacts/
+notebooks/models/
+notebooks/**/mlruns/
+notebooks/**/mlartifacts/
+notebooks/**/models/
