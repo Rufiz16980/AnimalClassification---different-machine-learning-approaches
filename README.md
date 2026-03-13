@@ -162,7 +162,6 @@ Evaluation transformations defined in `configs/transforms_v1.yaml`:
 
 ## Example Augmented Samples
 
-The project saves a preview grid of runtime augmentations to:
 
 ![Augmentation Preview](reports/figures/sample_augmented_images.png)
 
@@ -202,7 +201,21 @@ config.json
 
 # Models Implemented
 
-The project includes multiple model families.
+This project currently includes the following benchmarked model families and concrete model variants.
+
+## Classical ML with Handcrafted Features
+- [HOG + Approximate RBF SVM (`10_01_hog_svm`)](#hog--approximate-rbf-svm)
+- [LBP + Approximate RBF SVM (`10_02_lbp_svm`)](#lbp--approximate-rbf-svm)
+- [HSV Histogram + Logistic Regression (`10_03_colorhist_lr`)](#hsv-histogram--logistic-regression)
+
+## Deep Features with Fixed Pretrained Encoder
+- [ResNet50 Embedding Extraction (`20_01_extract_embeddings_resnet50`)](#embedding-extraction)
+- [ResNet50 Embeddings + Logistic Regression (`20_02_lr_on_embeddings`)](#logistic-regression-on-resnet50-embeddings)
+- [ResNet50 Embeddings + Approximate RBF SVM (`20_03_svm_on_embeddings`)](#approximate-rbf-svm-on-resnet50-embeddings)
+
+## CNNs Trained From Scratch
+- [CustomCNN v1 (`30_01_customcnn_v1`)](#customcnn-v1-architecture)
+- [CustomCNN v2 (`30_02_customcnn_v2`)](#customcnn-v2-architecture)
 
 ---
 
