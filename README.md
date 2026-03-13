@@ -164,9 +164,7 @@ Evaluation transformations defined in `configs/transforms_v1.yaml`:
 
 The project saves a preview grid of runtime augmentations to:
 
-```
-reports/figures/sample_augmented_images.png
-```
+![Augmentation Preview](reports/figures/sample_augmented_images.png)
 
 This figure was generated during validation of the transformation pipeline and shows multiple stochastic augmentations of the same source image. It demonstrates how the training pipeline introduces controlled variation through cropping, flipping, rotation, and color jitter without modifying files on disk.
 
