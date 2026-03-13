@@ -43,7 +43,7 @@ data/**/*.gz
 # ----------------------
 # Models / training artifacts
 # ----------------------
-models/
+/models/
 checkpoints/
 *.pt
 *.pth
