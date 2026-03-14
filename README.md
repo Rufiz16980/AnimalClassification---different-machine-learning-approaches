@@ -16,7 +16,7 @@ A structured experimental pipeline for **animal image classification** comparing
 
 The goal of this project is to **systematically benchmark different modeling strategies** under a shared dataset split and transformation pipeline.
 
-The repository is designed to be **reproducible, modular, and experiment-tracked**, allowing fair comparisons between approaches.
+The repository is designed to be **reproducible, modular, and experiment-tracked**, allowing fair comparisons between approaches. The project benchmarks handcrafted-feature pipelines, pretrained deep-feature extraction, and convolutional neural networks trained from scratch on a common three-class dataset consisting of **cats, dogs, and wildlife** images.
 
 ---
 
@@ -28,6 +28,8 @@ This project investigates how different machine learning paradigms perform on th
 2. **Deep feature extraction using pretrained models**
 3. **CNN architectures trained from scratch**
 
+The comparison is designed to be fair by keeping dataset splits, preprocessing logic, and reporting structure as consistent as possible across experiments.
+
 All experiments share:
 
 - a **fixed dataset split**
@@ -38,7 +40,7 @@ All experiments share:
 The task is a **3-class image classification problem**:
 - cats
 - dogs
-- wildlifey
+- wildlife
 
 <!-- 
 | Class |
@@ -51,7 +53,7 @@ The task is a **3-class image classification problem**:
 
 # Dataset
 
-The dataset is constructed by merging several public datasets:
+The dataset is constructed by merging several public datasets in order to create a larger and more diverse three-class benchmark for animal image classification:
 
 | Dataset | Description |
 |------|------|
