@@ -104,14 +104,23 @@ def get_weights_name(model_name: str, pretrained: bool = True) -> str:
     return str(getattr(weights, "name", "DEFAULT"))
 
 
-def _find_last_linear(module: nn.Module) -> nn.Linear:
+def _find_first_linear(module: nn.Module) -> nn.Linear:
+    """Return the first nn.Linear found inside *module*.
+
+    For classifier-style heads (e.g. MobileNetV3-Large) the *first* Linear
+    in the Sequential is the one that receives input directly from the
+    backbone, so its ``in_features`` gives the correct replacement dimension.
+    Scanning in reverse would find the *last* Linear (e.g. the 1280->\ 1000
+    prediction head), which is one layer too deep and produces a shape
+    mismatch at runtime.
+    """
     if isinstance(module, nn.Linear):
         return module
     if isinstance(module, nn.Sequential):
-        for child in reversed(list(module.children())):
+        for child in module.children():
             if isinstance(child, nn.Linear):
                 return child
-    raise ValueError(f"Could not find a final nn.Linear inside module type: {type(module).__name__}")
+    raise ValueError(f"Could not find a first nn.Linear inside module type: {type(module).__name__}")
 
 
 def get_head_module(model: nn.Module, model_name: str) -> nn.Module:
@@ -136,7 +145,7 @@ def replace_classifier_head(model: nn.Module, model_name: str, num_classes: int 
 
     if spec.head_kind == "classifier":
         old_head = get_head_module(model, model_name)
-        in_features = int(_find_last_linear(old_head).in_features)
+        in_features = int(_find_first_linear(old_head).in_features)
         model.classifier = nn.Sequential(
             nn.Dropout(p=dropout_p),
             nn.Linear(in_features, num_classes),
