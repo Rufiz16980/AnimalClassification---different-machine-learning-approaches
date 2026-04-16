@@ -13,6 +13,9 @@ A structured experimental pipeline for **animal image classification** comparing
 - classical computer vision approaches
 - deep feature extraction
 - custom CNN models trained from scratch
+- pretrained CNN transfer learning
+- pretrained Vision Transformer families
+- custom Vision Transformers trained from scratch
 
 The goal of this project is to **systematically benchmark different modeling strategies** under a shared dataset split and transformation pipeline.
 
@@ -28,6 +31,8 @@ This project investigates how different machine learning paradigms perform on th
 2. **Deep feature extraction using pretrained models**
 3. **CNN architectures trained from scratch**
 4. **Pretrained CNNs fine-tuned end to end**
+5. **Pretrained Vision Transformer families**
+6. **Custom Vision Transformers trained from scratch**
 
 The comparison is designed to be fair by keeping dataset splits, preprocessing logic, and reporting structure as consistent as possible across experiments.
 
@@ -228,6 +233,16 @@ This project currently includes the following benchmarked model families and con
 - [EfficientNet-B0 Pretrained (`40_03_efficientnet_b0_pretrained`)](#efficientnet-b0-pretrained)
 - [ResNet50 Pretrained (`40_04_resnet50_pretrained`)](#resnet50-pretrained)
 - [EfficientNet-B2 Pretrained (`40_05_efficientnet_b2_pretrained`)](#efficientnet-b2-pretrained)
+
+## Pretrained Vision Transformers
+- `50_01_vit_b_16`
+- `50_02_swin_t`
+- `50_03_swin_v2_s`
+- `50_04_maxvit_t`
+
+## Vision Transformers From Scratch
+- `60_01_customvit_v1`
+- `60_02_customvit_v2`
 
 ---
 
@@ -1127,6 +1142,20 @@ AnimalClassification/
 - **`40_04_resnet50_pretrained.ipynb`** - trains the strongest residual transfer-learning baseline and provides direct comparison with the ResNet50 fixed-embedding family.
 - **`40_05_efficientnet_b2_pretrained.ipynb`** - trains the larger EfficientNet-B2 transfer-learning baseline.
 
+### Pretrained ViT notebooks
+
+- **`50_00_overview.ipynb`** - validates the pretrained Vision Transformer family setup and lists the supported pretrained ViT-style backbones.
+- **`50_01_vit_b_16.ipynb`** - trains the plain ViT-B/16 transfer-learning baseline.
+- **`50_02_swin_t.ipynb`** - trains the Swin-T transfer-learning baseline.
+- **`50_03_swin_v2_s.ipynb`** - trains the Swin V2-S transfer-learning baseline.
+- **`50_04_maxvit_t.ipynb`** - trains the MaxViT-T transfer-learning baseline.
+
+### Scratch-ViT notebooks
+
+- **`60_00_overview.ipynb`** - validates Phase 6 readiness for manually implemented Vision Transformers from scratch.
+- **`60_01_customvit_v1.ipynb`** - trains the first educational encoder-only Vision Transformer implemented directly in PyTorch.
+- **`60_02_customvit_v2.ipynb`** - trains the deeper and wider scratch-ViT baseline under the same rerun-safe benchmark contract.
+
 ---
 
 # Folder Descriptions
@@ -1177,6 +1206,20 @@ Pretrained CNN transfer-learning implementation code.
 - **`models.py`** - pretrained backbone factory, classifier-head replacement, and stage-specific trainable-parameter configuration.
 - **`utils.py`** - transfer-learning training loop, rerun-safe run resolution, checkpointing, curve saving, benchmarking, and metrics helpers.
 
+### `src/models/vit/`
+
+Pretrained Vision Transformer-family implementation code.
+
+- **`models.py`** - pretrained transformer-family registry, classifier-head replacement, and stage-specific trainable-parameter configuration.
+- **`utils.py`** - thin helper re-export layer keeping notebook structure aligned with the pretrained CNN family.
+
+### `src/models/vit_scratch/`
+
+Custom Vision Transformer implementation code for encoder-only scratch models.
+
+- **`models.py`** - patch embedding, self-attention, encoder-block, and full scratch-ViT model definitions.
+- **`utils.py`** - scratch-ViT training, epoch-level resume checkpointing, evaluation, benchmarking, and artifact helpers.
+
 ### `models/`
 
 Per-run trained model artifacts.
@@ -1199,7 +1242,7 @@ MLflow experiment tracking directory.
 
 ### `notebooks/`
 
-Phase-organized experiment notebooks covering setup, preprocessing, classical ML, deep features, scratch CNN training, and pretrained CNN fine-tuning.
+Phase-organized experiment notebooks covering setup, preprocessing, classical ML, deep features, scratch CNN training, pretrained CNN fine-tuning, pretrained Vision Transformers, and custom Vision Transformers from scratch.
 
 ---
 
