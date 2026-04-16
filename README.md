@@ -16,7 +16,7 @@ A structured experimental pipeline for **animal image classification** comparing
 
 The goal of this project is to **systematically benchmark different modeling strategies** under a shared dataset split and transformation pipeline.
 
-The repository is designed to be **reproducible, modular, and experiment-tracked**, allowing fair comparisons between approaches. The project benchmarks handcrafted-feature pipelines, pretrained deep-feature extraction, and convolutional neural networks trained from scratch on a common three-class dataset consisting of **cats, dogs, and wildlife** images.
+The repository is designed to be **reproducible, modular, and experiment-tracked**, allowing fair comparisons between approaches. The project benchmarks handcrafted-feature pipelines, pretrained deep-feature extraction, convolutional neural networks trained from scratch, and pretrained CNN transfer-learning models on a common three-class dataset consisting of **cats, dogs, and wildlife** images.
 
 ---
 
@@ -27,6 +27,7 @@ This project investigates how different machine learning paradigms perform on th
 1. **Handcrafted feature pipelines**
 2. **Deep feature extraction using pretrained models**
 3. **CNN architectures trained from scratch**
+4. **Pretrained CNNs fine-tuned end to end**
 
 The comparison is designed to be fair by keeping dataset splits, preprocessing logic, and reporting structure as consistent as possible across experiments.
 
@@ -220,6 +221,13 @@ This project currently includes the following benchmarked model families and con
 ## CNNs Trained From Scratch
 - [CustomCNN v1 (`30_01_customcnn_v1`)](#customcnn-v1-architecture)
 - [CustomCNN v2 (`30_02_customcnn_v2`)](#customcnn-v2-architecture)
+
+## Pretrained CNN Transfer Learning
+- [ResNet18 Pretrained (`40_01_resnet18_pretrained`)](#resnet18-pretrained)
+- [MobileNetV3 Large Pretrained (`40_02_mobilenet_v3_large_pretrained`)](#mobilenetv3-large-pretrained)
+- [EfficientNet-B0 Pretrained (`40_03_efficientnet_b0_pretrained`)](#efficientnet-b0-pretrained)
+- [ResNet50 Pretrained (`40_04_resnet50_pretrained`)](#resnet50-pretrained)
+- [EfficientNet-B2 Pretrained (`40_05_efficientnet_b2_pretrained`)](#efficientnet-b2-pretrained)
 
 ---
 
@@ -628,6 +636,313 @@ ModuleNotFoundError: No module named 'onnxscript'
 
 ---
 
+# 4 - Pretrained CNN Transfer Learning
+
+Phase 4 extends the benchmark to **end-to-end pretrained CNN classifiers** initialized from official ImageNet weights in `torchvision`.
+
+Unlike the fixed-embedding pipelines in Phase 2, these models:
+
+- replace the original ImageNet classification head with a 3-class head
+- train the new head first with the backbone frozen
+- then partially fine-tune the pretrained backbone
+- log the same benchmark outputs used by the scratch CNN family:
+  - checkpoint
+  - config
+  - metrics
+  - training curves
+  - latency and throughput estimates
+
+Shared transfer-learning training recipe:
+
+| Parameter | Value |
+|------|------|
+| Head-only epochs | 5 |
+| Partial fine-tuning epochs | 15 |
+| Optimizer | AdamW |
+| Head learning rate | 1e-3 |
+| Backbone learning rate | 1e-4 |
+| Weight decay | 1e-4 |
+| Scheduler | ReduceLROnPlateau |
+| Gradient clipping | 1.0 |
+| Seed | 42 |
+
+All models use:
+
+- `split_v1`
+- `transforms_v1`
+- ImageNet normalization
+- the same project-level MLflow and artifact conventions as the `30_` notebooks
+
+---
+
+## ResNet18 Pretrained
+
+Architecture summary:
+
+- ImageNet-pretrained `torchvision` ResNet18
+- original `fc` replaced with:
+  - `Dropout(0.3) -> Linear(... -> 3)`
+- Stage 1:
+  - train classifier head only
+- Stage 2:
+  - unfreeze `layer4` and continue fine-tuning
+
+Weights:
+
+- `IMAGENET1K_V1`
+
+Model size:
+
+```
+11,178,051 parameters
+~42.68 MB
+```
+
+Best validation result:
+
+- **Best epoch:** 13
+- **Best validation macro F1:** 0.9951
+
+Test result:
+
+- **Test loss:** 0.0206
+- **Test accuracy:** 0.9947
+- **Test macro F1:** 0.9949
+
+Inference benchmark:
+
+- **Latency per image:** 0.2786 ms
+- **Throughput:** 3588.84 images/sec
+
+Artifacts saved to:
+
+```
+models/cnn_pretrained/resnet18_pretrained/run_20260403_103808/
+├── checkpoint.pt
+├── config.json
+├── metrics.json
+├── loss_curve.png
+└── accuracy_curve.png
+```
+
+---
+
+## MobileNetV3 Large Pretrained
+
+Architecture summary:
+
+- ImageNet-pretrained `torchvision` MobileNetV3 Large
+- final classifier replaced with:
+  - `Dropout(0.3) -> Linear(... -> 3)`
+- Stage 1:
+  - train classifier only
+- Stage 2:
+  - unfreeze the final feature block group and fine-tune
+
+Weights:
+
+- `IMAGENET1K_V2`
+
+Model size:
+
+```
+2,974,835 parameters
+~11.44 MB
+```
+
+Best validation result:
+
+- **Best epoch:** 8
+- **Best validation macro F1:** 0.9933
+
+Test result:
+
+- **Test loss:** 0.0264
+- **Test accuracy:** 0.9914
+- **Test macro F1:** 0.9918
+
+Inference benchmark:
+
+- **Latency per image:** 0.4396 ms
+- **Throughput:** 2275.05 images/sec
+
+Artifacts saved to:
+
+```
+models/cnn_pretrained/mobilenet_v3_large_pretrained/run_20260403_111528/
+├── checkpoint.pt
+├── config.json
+├── metrics.json
+├── loss_curve.png
+└── accuracy_curve.png
+```
+
+---
+
+## EfficientNet-B0 Pretrained
+
+Architecture summary:
+
+- ImageNet-pretrained `torchvision` EfficientNet-B0
+- final classifier replaced with:
+  - `Dropout(0.3) -> Linear(... -> 3)`
+- Stage 1:
+  - train classifier only
+- Stage 2:
+  - unfreeze the final feature stage and fine-tune
+
+Weights:
+
+- `IMAGENET1K_V1`
+
+Model size:
+
+```
+4,011,391 parameters
+~15.46 MB
+```
+
+Best validation result:
+
+- **Best epoch:** 13
+- **Best validation macro F1:** 0.9945
+
+Test result:
+
+- **Test loss:** 0.0261
+- **Test accuracy:** 0.9928
+- **Test macro F1:** 0.9932
+
+Inference benchmark:
+
+- **Latency per image:** 0.4424 ms
+- **Throughput:** 2260.58 images/sec
+
+Artifacts saved to:
+
+```
+models/cnn_pretrained/efficientnet_b0_pretrained/run_20260403_111752/
+├── checkpoint.pt
+├── config.json
+├── metrics.json
+├── loss_curve.png
+└── accuracy_curve.png
+```
+
+---
+
+## ResNet50 Pretrained
+
+Architecture summary:
+
+- ImageNet-pretrained `torchvision` ResNet50
+- original `fc` replaced with:
+  - `Dropout(0.3) -> Linear(... -> 3)`
+- Stage 1:
+  - train classifier head only
+- Stage 2:
+  - unfreeze `layer4` and fine-tune
+
+Weights:
+
+- `IMAGENET1K_V2`
+
+Model size:
+
+```
+23,514,179 parameters
+~89.90 MB
+```
+
+Best validation result:
+
+- **Best epoch:** 18
+- **Best validation macro F1:** 0.9973
+
+Test result:
+
+- **Test loss:** 0.0232
+- **Test accuracy:** 0.9959
+- **Test macro F1:** 0.9961
+
+Inference benchmark:
+
+- **Latency per image:** 0.5290 ms
+- **Throughput:** 1890.34 images/sec
+
+Artifacts saved to:
+
+```
+models/cnn_pretrained/resnet50_pretrained/run_20260403_114106/
+├── checkpoint.pt
+├── config.json
+├── metrics.json
+├── loss_curve.png
+└── accuracy_curve.png
+```
+
+---
+
+## EfficientNet-B2 Pretrained
+
+Architecture summary:
+
+- ImageNet-pretrained `torchvision` EfficientNet-B2
+- final classifier replaced with:
+  - `Dropout(0.3) -> Linear(... -> 3)`
+- Stage 1:
+  - train classifier only
+- Stage 2:
+  - unfreeze the final feature stage and fine-tune
+
+Weights:
+
+- `IMAGENET1K_V1`
+
+Model size:
+
+```
+7,705,221 parameters
+~29.65 MB
+```
+
+Best validation result:
+
+- **Best epoch:** 12
+- **Best validation macro F1:** 0.9949
+
+Test result:
+
+- **Test loss:** 0.0267
+- **Test accuracy:** 0.9938
+- **Test macro F1:** 0.9941
+
+Inference benchmark:
+
+- **Latency per image:** 0.5408 ms
+- **Throughput:** 1849.21 images/sec
+
+Artifacts saved to:
+
+```
+models/cnn_pretrained/efficientnet_b2_pretrained/run_20260403_121522/
+├── checkpoint.pt
+├── config.json
+├── metrics.json
+├── loss_curve.png
+└── accuracy_curve.png
+```
+
+---
+
+As with the scratch-CNN runs, ONNX export was attempted during Phase 4 but failed because the required export dependency was not available:
+
+```
+ModuleNotFoundError: No module named 'onnxscript'
+```
+
+---
+
 # Experimental Results
 
 | Model | Category | Test Accuracy | Macro F1 | Latency (ms/image) | Throughput (img/s) | Params | Size MB |
@@ -639,10 +954,15 @@ ModuleNotFoundError: No module named 'onnxscript'
 | ResNet50 Embeddings + Approx. RBF SVM | Deep Features | 0.9877 | 0.9882 | - | - | - | - |
 | CustomCNN v1 | CNN from Scratch | 0.9454 | 0.9472 | 0.1941 | 5152.97 | 127,043 | 0.485 |
 | CustomCNN v2 | CNN from Scratch | 0.9714 | 0.9722 | - | - | 355,491 | 1.360 |
+| ResNet18 Pretrained | CNN Transfer Learning | 0.9947 | 0.9949 | 0.2786 | 3588.84 | 11,178,051 | 42.678 |
+| MobileNetV3 Large Pretrained | CNN Transfer Learning | 0.9914 | 0.9918 | 0.4396 | 2275.05 | 2,974,835 | 11.442 |
+| EfficientNet-B0 Pretrained | CNN Transfer Learning | 0.9928 | 0.9932 | 0.4424 | 2260.58 | 4,011,391 | 15.463 |
+| ResNet50 Pretrained | CNN Transfer Learning | 0.9959 | 0.9961 | 0.5290 | 1890.34 | 23,514,179 | 89.903 |
+| EfficientNet-B2 Pretrained | CNN Transfer Learning | 0.9938 | 0.9941 | 0.5408 | 1849.21 | 7,705,221 | 29.651 |
 
 *Note: A centralized benchmark notebook for standardized inference-cost evaluation across all models is planned. Metrics not yet benchmarked in the same environment are intentionally shown as `-`.*
 
-The strongest results so far come from **fixed deep features extracted by ImageNet-pretrained ResNet50**, especially when paired with a simple logistic regression classifier. Among models trained from scratch, `CustomCNN v2` substantially improves over `CustomCNN v1`, while remaining compact enough for efficient deployment. Classical handcrafted baselines remain useful as interpretable references but are clearly outperformed by learned visual representations on this dataset.
+The strongest results so far come from **ImageNet-pretrained residual models**, with `ResNet50 Pretrained` achieving the best end-to-end result and `ResNet18 Pretrained` also performing exceptionally well while remaining much lighter. The earlier **fixed ResNet50 embedding** baseline remains extremely strong, showing that the dataset benefits heavily from pretrained visual representations. Among models trained from scratch, `CustomCNN v2` substantially improves over `CustomCNN v1`, while handcrafted baselines remain useful as interpretable references but are clearly outperformed by learned visual representations.
 
 ---
 
@@ -686,6 +1006,16 @@ The repository already contains generated artifacts from preprocessing and train
 - `models/cnn_scratch/customcnn_v1/run_20260313_095856/accuracy_curve.png`
 - `models/cnn_scratch/customcnn_v2/run_20260313_114741/loss_curve.png`
 - `models/cnn_scratch/customcnn_v2/run_20260313_114741/accuracy_curve.png`
+- `models/cnn_pretrained/resnet18_pretrained/run_20260403_103808/loss_curve.png`
+- `models/cnn_pretrained/resnet18_pretrained/run_20260403_103808/accuracy_curve.png`
+- `models/cnn_pretrained/mobilenet_v3_large_pretrained/run_20260403_111528/loss_curve.png`
+- `models/cnn_pretrained/mobilenet_v3_large_pretrained/run_20260403_111528/accuracy_curve.png`
+- `models/cnn_pretrained/efficientnet_b0_pretrained/run_20260403_111752/loss_curve.png`
+- `models/cnn_pretrained/efficientnet_b0_pretrained/run_20260403_111752/accuracy_curve.png`
+- `models/cnn_pretrained/resnet50_pretrained/run_20260403_114106/loss_curve.png`
+- `models/cnn_pretrained/resnet50_pretrained/run_20260403_114106/accuracy_curve.png`
+- `models/cnn_pretrained/efficientnet_b2_pretrained/run_20260403_121522/loss_curve.png`
+- `models/cnn_pretrained/efficientnet_b2_pretrained/run_20260403_121522/accuracy_curve.png`
 
 These artifacts support both qualitative inspection and reproducibility of the reported experiments.
 
@@ -788,6 +1118,15 @@ AnimalClassification/
 - **`30_01_customcnn_v1.ipynb`** - trains the first scratch CNN baseline and benchmarks its inference speed.
 - **`30_02_customcnn_v2.ipynb`** - trains the deeper scratch CNN with batch normalization and exports comparable run artifacts.
 
+### Pretrained CNN notebooks
+
+- **`40_00_overview.ipynb`** - validates Phase 4 readiness, pretrained-weight access, shared data loading, and portability assumptions.
+- **`40_01_resnet18_pretrained.ipynb`** - trains the ResNet18 transfer-learning baseline with head-only warmup followed by partial fine-tuning.
+- **`40_02_mobilenet_v3_large_pretrained.ipynb`** - trains the MobileNetV3 Large transfer-learning baseline and benchmarks a mobile-efficient pretrained CNN.
+- **`40_03_efficientnet_b0_pretrained.ipynb`** - trains the EfficientNet-B0 transfer-learning baseline.
+- **`40_04_resnet50_pretrained.ipynb`** - trains the strongest residual transfer-learning baseline and provides direct comparison with the ResNet50 fixed-embedding family.
+- **`40_05_efficientnet_b2_pretrained.ipynb`** - trains the larger EfficientNet-B2 transfer-learning baseline.
+
 ---
 
 # Folder Descriptions
@@ -831,6 +1170,13 @@ Scratch-CNN implementation code.
 - **`models.py`** - model builders and CNN architecture definitions such as `CustomCNNv1` and `CustomCNNv2`.
 - **`utils.py`** - training loop, evaluation, checkpointing, ONNX export, curve saving, and benchmarking helpers.
 
+### `src/models/cnn_pretrained/`
+
+Pretrained CNN transfer-learning implementation code.
+
+- **`models.py`** - pretrained backbone factory, classifier-head replacement, and stage-specific trainable-parameter configuration.
+- **`utils.py`** - transfer-learning training loop, rerun-safe run resolution, checkpointing, curve saving, benchmarking, and metrics helpers.
+
 ### `models/`
 
 Per-run trained model artifacts.
@@ -838,6 +1184,7 @@ Per-run trained model artifacts.
 - **`ml_basic_features/`** - serialized classical ML models based on handcrafted features.
 - **`ml_deep_features/`** - classifiers trained on cached deep embeddings.
 - **`cnn_scratch/`** - checkpointed scratch CNN experiments with plots and metrics.
+- **`cnn_pretrained/`** - checkpointed transfer-learning experiments for ImageNet-pretrained CNN backbones.
 
 ### `reports/`
 
@@ -852,7 +1199,7 @@ MLflow experiment tracking directory.
 
 ### `notebooks/`
 
-Phase-organized experiment notebooks covering setup, preprocessing, classical ML, deep features, and scratch CNN training.
+Phase-organized experiment notebooks covering setup, preprocessing, classical ML, deep features, scratch CNN training, and pretrained CNN fine-tuning.
 
 ---
 
@@ -931,7 +1278,7 @@ Planned next steps include:
 - standardized inference timing under one shared environment
 - additional metrics such as F2 score, specificity, and per-class sensitivity
 - hardware-aware reporting (GPU model, VRAM, RAM, CPU/GPU timing)
-- completion of remaining model families beyond the current baselines
+- completion of remaining model families beyond the current baselines, especially transformer-based image models
 - improved ONNX export support by adding missing export dependencies
 
 ---
