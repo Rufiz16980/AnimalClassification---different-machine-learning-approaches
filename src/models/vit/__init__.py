@@ -35,7 +35,6 @@ from .utils import (
     run_training_stage,
     save_checkpoint_atomic,
     save_report_metrics_copy,
-    training_history_from_dict,
     save_training_curves,
+    training_history_from_dict,
 )
-

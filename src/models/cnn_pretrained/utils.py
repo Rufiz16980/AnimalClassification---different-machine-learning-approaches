@@ -46,6 +46,13 @@ class RunResolution:
     resumable_checkpoint: Optional[Path] = None
 
 
+@dataclass
+class ResumeState:
+    history: TrainingHistory
+    best_state: Dict[str, Any]
+    completed_stage: Optional[str] = None
+
+
 def ensure_dir(path: Path) -> Path:
     path.mkdir(parents=True, exist_ok=True)
     return path
@@ -481,6 +488,42 @@ def load_checkpoint_for_resume(
     return checkpoint
 
 
+def prepare_resume_state(
+    checkpoint_path: Path,
+    model: nn.Module,
+    experiment_signature: str,
+    map_location: str = "cpu",
+) -> ResumeState:
+    checkpoint = torch.load(checkpoint_path, map_location=map_location)
+    if checkpoint.get("experiment_signature") != experiment_signature:
+        raise ValueError("Resume checkpoint signature does not match current experiment signature.")
+
+    history = training_history_from_dict(checkpoint.get("history"))
+    best_state = {
+        key: checkpoint[key]
+        for key in [
+            "epoch",
+            "stage",
+            "model_state_dict",
+            "optimizer_state_dict",
+            "scheduler_state_dict",
+            "scaler_state_dict",
+            "best_val_macro_f1",
+            "best_val_loss",
+            "best_val_accuracy",
+        ]
+        if key in checkpoint
+    }
+    if "model_state_dict" in best_state:
+        restore_best_weights(model, best_state)
+
+    return ResumeState(
+        history=history,
+        best_state=best_state,
+        completed_stage=checkpoint.get("stage"),
+    )
+
+
 @torch.no_grad()
 def benchmark_inference(
     model: nn.Module,
@@ -543,6 +586,11 @@ def export_model_to_onnx(
     device: str = "cpu",
     opset_version: int = 17,
 ) -> None:
+    try:
+        import onnx  # noqa: F401
+    except ModuleNotFoundError as exc:
+        raise ModuleNotFoundError("ONNX export requires the 'onnx' package to be installed.") from exc
+
     model.eval()
     dummy_input = torch.randn(*input_shape, device=device)
     torch.onnx.export(
@@ -551,11 +599,34 @@ def export_model_to_onnx(
         str(export_path),
         export_params=True,
         opset_version=opset_version,
+        dynamo=False,
         do_constant_folding=True,
         input_names=["input"],
         output_names=["logits"],
         dynamic_axes={"input": {0: "batch_size"}, "logits": {0: "batch_size"}},
     )
+
+
+def attempt_onnx_export(
+    model: nn.Module,
+    export_path: Path,
+    input_shape: Tuple[int, int, int, int] = (1, 3, 224, 224),
+    device: str = "cpu",
+    opset_version: int = 17,
+) -> Dict[str, Any]:
+    status = {"attempted": True, "succeeded": False, "path": str(export_path), "error": None}
+    try:
+        export_model_to_onnx(
+            model=model,
+            export_path=export_path,
+            input_shape=input_shape,
+            device=device,
+            opset_version=opset_version,
+        )
+        status["succeeded"] = True
+    except Exception as exc:
+        status["error"] = f"{type(exc).__name__}: {exc}"
+    return status
 
 
 def save_training_curves(history: TrainingHistory, output_dir: Path) -> Dict[str, Path]:

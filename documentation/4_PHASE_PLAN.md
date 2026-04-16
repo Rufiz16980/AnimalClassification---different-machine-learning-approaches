@@ -1436,4 +1436,53 @@ This will establish the pretrained CNN benchmark family before the project moves
 
 ---
 
+## 23. Phase 4 Extension Pack
+
+After the initial five Phase 4 pretrained CNN notebooks were completed, the benchmark scope was extended with additional modern CNN families that are still compatible with the same staged transfer-learning pipeline.
+
+These additions stay in the `40_` range because they are still part of the pretrained CNN benchmark family and should reuse the same helper layer, artifact layout, and rerun-safe notebook contract.
+
+### Additional Notebooks
+
+- `40_06_convnext_small.ipynb`
+- `40_07_resnext50_32x4d.ipynb`
+- `40_08_densenet121.ipynb`
+- `40_09_regnet_y_3_2gf.ipynb`
+- `40_10_regnet_y_8gf.ipynb`
+- `40_11_efficientnet_v2_s.ipynb`
+
+### Additional CNN Families Represented
+
+- `ConvNeXt`
+- `ResNeXt`
+- `DenseNet`
+- `RegNet`
+- `EfficientNetV2`
+
+### Shared Constraints For The Extension Pack
+
+- The notebooks must preserve the same root/path detection pattern as `40_01` to `40_05`.
+- They must use experiment-signature-based run reuse.
+- They must remain safe under repeated `Run All` execution.
+- They must not overwrite completed runs for the same experiment signature.
+- They must save artifacts under `models/cnn_pretrained/<model_name>/run_YYYYMMDD_HHMMSS/`.
+- They must continue to log final metrics and artifacts to MLflow when available.
+- They must continue to treat ONNX export as non-fatal.
+
+### Runtime Image Size Handling
+
+The extension pack introduces models whose recommended pretrained inference sizes are not all identical. To avoid shape mistakes while still reusing the Phase 1 transform pipeline, runtime size overrides should be applied on top of `configs/transforms_v1.yaml`.
+
+The implemented plan uses model-specific size metadata from the shared pretrained CNN helper package and applies those values at notebook runtime rather than duplicating multiple YAML files.
+
+### Why These Models Were Added
+
+- `convnext_small`: modern ConvNet family and practical replacement for adding legacy VGG-style baselines
+- `resnext50_32x4d`: stronger residual-family diversity without adding more plain ResNet scale variants
+- `densenet121`: dense-connectivity family explicitly referenced in the earlier project scope
+- `regnet_y_3_2gf` and `regnet_y_8gf`: modern design-space CNN family with different capacity levels
+- `efficientnet_v2_s`: newer efficient family that is more relevant than adding historical CNN artifacts
+
+---
+
 # End of Phase 4 Plan
