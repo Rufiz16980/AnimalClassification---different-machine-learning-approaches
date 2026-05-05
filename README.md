@@ -211,7 +211,8 @@ config.json
 
 # Models Implemented
 
-This project currently includes the following benchmarked model families and concrete model variants.
+This project currently includes the following implemented and benchmarked model families and concrete model variants.
+Rows marked as pending are implemented in code/notebooks but do not yet have completed result artifacts in the local repository.
 
 ## Classical ML with Handcrafted Features
 - [HOG + Approximate RBF SVM (`10_01_hog_svm`)](#hog--approximate-rbf-svm)
@@ -233,16 +234,22 @@ This project currently includes the following benchmarked model families and con
 - [EfficientNet-B0 Pretrained (`40_03_efficientnet_b0_pretrained`)](#efficientnet-b0-pretrained)
 - [ResNet50 Pretrained (`40_04_resnet50_pretrained`)](#resnet50-pretrained)
 - [EfficientNet-B2 Pretrained (`40_05_efficientnet_b2_pretrained`)](#efficientnet-b2-pretrained)
+- `40_06_convnext_small` - implemented, results pending
+- `40_07_resnext50_32x4d` - implemented, results pending
+- `40_08_densenet121` - implemented, results pending
+- `40_09_regnet_y_3_2gf` - implemented, results pending
+- `40_10_regnet_y_8gf` - implemented, results pending
+- `40_11_efficientnet_v2_s` - implemented, results pending
 
 ## Pretrained Vision Transformers
-- `50_01_vit_b_16`
-- `50_02_swin_t`
-- `50_03_swin_v2_s`
-- `50_04_maxvit_t`
+- [ViT-B/16 Pretrained (`50_01_vit_b_16`)](#vit-b16-pretrained)
+- [Swin-T Pretrained (`50_02_swin_t`)](#swin-t-pretrained)
+- [Swin V2-S Pretrained (`50_03_swin_v2_s`)](#swin-v2-s-pretrained)
+- `50_04_maxvit_t` - implemented, results pending
 
 ## Vision Transformers From Scratch
-- `60_01_customvit_v1`
-- `60_02_customvit_v2`
+- `60_01_customvit_v1` - implemented, results pending
+- `60_02_customvit_v2` - implemented, results pending
 
 ---
 
@@ -958,26 +965,214 @@ ModuleNotFoundError: No module named 'onnxscript'
 
 ---
 
+# 5 - Pretrained Vision Transformer Transfer Learning
+
+Phase 5 extends the benchmark from convolutional ImageNet backbones to pretrained transformer-family image classifiers from `torchvision`.
+
+These models follow the same transfer-learning contract as the pretrained CNN notebooks:
+
+- load official ImageNet pretrained weights
+- replace the original classification head with a 3-class project head
+- train the new head first with the backbone frozen
+- partially fine-tune the pretrained backbone
+- log checkpoint, config, metrics, curves, latency, throughput, parameter count, and model size through MLflow
+
+Shared training recipe:
+
+| Parameter | Value |
+|------|------|
+| Head-only epochs | 5 |
+| Partial fine-tuning epochs | 15 |
+| Optimizer | AdamW |
+| Head learning rate | 1e-3 |
+| Backbone learning rate | 1e-4 |
+| Weight decay | 1e-4 |
+| Seed | 42 |
+| Device in completed runs | CUDA |
+
+The completed Phase 5 runs are currently stored under `mlruns/` rather than mirrored into top-level `models/vit/` directories.
+
+---
+
+## ViT-B16 Pretrained
+
+Architecture summary:
+
+- ImageNet-pretrained `torchvision` ViT-B/16
+- plain Vision Transformer baseline with non-overlapping 16x16 patches
+- original classification head replaced with a 3-class head
+- input image size: 224
+- evaluation transform: resize 256, center crop 224, ImageNet normalization
+
+Weights:
+
+- `IMAGENET1K_V1`
+
+Model size:
+
+```
+85,800,963 parameters
+~327.30 MB
+```
+
+Best validation result:
+
+- **Best validation loss:** 0.0197
+- **Best validation macro F1:** 0.9977
+
+Test result:
+
+- **Test loss:** 0.0237
+- **Test accuracy:** 0.9968
+- **Test macro F1:** 0.9969
+
+Inference benchmark:
+
+- **Latency per image:** 1.5236 ms
+- **Throughput:** 656.32 images/sec
+
+Artifacts saved to:
+
+```
+mlruns/511423962448650871/8296575d17d94d31b023f94ccd570c18/artifacts/
+- checkpoint.pt
+- config.json
+- metrics.json
+- loss_curve.png
+- accuracy_curve.png
+```
+
+---
+
+## Swin-T Pretrained
+
+Architecture summary:
+
+- ImageNet-pretrained `torchvision` Swin-T
+- hierarchical shifted-window transformer baseline
+- original classifier replaced with a 3-class head
+- input image size: 224
+- evaluation transform: resize 232, center crop 224, ImageNet normalization
+
+Weights:
+
+- `IMAGENET1K_V1`
+
+Model size:
+
+```
+27,521,661 parameters
+~105.21 MB
+```
+
+Best validation result:
+
+- **Best validation loss:** 0.0141
+- **Best validation macro F1:** 0.9982
+
+Test result:
+
+- **Test loss:** 0.0180
+- **Test accuracy:** 0.9973
+- **Test macro F1:** 0.9974
+
+Inference benchmark:
+
+- **Latency per image:** 0.8609 ms
+- **Throughput:** 1161.54 images/sec
+
+Artifacts saved to:
+
+```
+mlruns/511423962448650871/283051a05b77442c9c5f9740b50bdfde/artifacts/
+- checkpoint.pt
+- config.json
+- metrics.json
+- loss_curve.png
+- accuracy_curve.png
+```
+
+---
+
+## Swin V2-S Pretrained
+
+Architecture summary:
+
+- ImageNet-pretrained `torchvision` Swin V2-S
+- second-generation hierarchical shifted-window transformer baseline
+- original classifier replaced with a 3-class head
+- input image size: 256
+- evaluation transform: resize 260, center crop 256, ImageNet normalization
+
+Weights:
+
+- `IMAGENET1K_V1`
+
+Model size:
+
+```
+48,970,749 parameters
+~187.60 MB
+```
+
+Best validation result:
+
+- **Best validation loss:** 0.0132
+- **Best validation macro F1:** 0.9978
+
+Test result:
+
+- **Test loss:** 0.0162
+- **Test accuracy:** 0.9962
+- **Test macro F1:** 0.9963
+
+Inference benchmark:
+
+- **Latency per image:** 2.1057 ms
+- **Throughput:** 474.91 images/sec
+
+Artifacts saved to:
+
+```
+mlruns/511423962448650871/880f01ae7f7c425d89f7c04775a33e5e/artifacts/
+- checkpoint.pt
+- config.json
+- metrics.json
+- loss_curve.png
+- accuracy_curve.png
+```
+
+---
+
+## MaxViT-T Pretrained
+
+`50_04_maxvit_t` is implemented in the pretrained ViT notebook family and model factory, but no completed local result artifact is currently present. It remains a pending benchmark run.
+
+---
+
 # Experimental Results
 
 | Model | Category | Test Accuracy | Macro F1 | Latency (ms/image) | Throughput (img/s) | Params | Size MB |
 |------|------|------:|------:|------:|------:|------:|------:|
-| HOG + Approx. RBF SVM | Handcrafted Features | 0.8024 | - | - | - | - | - |
+| HOG + Approx. RBF SVM | Handcrafted Features | 0.8024 | 0.8040 | - | - | - | - |
 | LBP + Approx. RBF SVM | Handcrafted Features | 0.6432 | 0.6542 | - | - | - | - |
 | HSV Histogram + Logistic Regression | Handcrafted Features | 0.5115 | 0.5123 | - | - | - | - |
 | ResNet50 Embeddings + Logistic Regression | Deep Features | 0.9949 | 0.9950 | - | - | - | - |
 | ResNet50 Embeddings + Approx. RBF SVM | Deep Features | 0.9877 | 0.9882 | - | - | - | - |
 | CustomCNN v1 | CNN from Scratch | 0.9454 | 0.9472 | 0.1941 | 5152.97 | 127,043 | 0.485 |
-| CustomCNN v2 | CNN from Scratch | 0.9714 | 0.9722 | - | - | 355,491 | 1.360 |
+| CustomCNN v2 | CNN from Scratch | 0.9714 | 0.9722 | 0.4496 | 2224.17 | 355,491 | 1.360 |
 | ResNet18 Pretrained | CNN Transfer Learning | 0.9947 | 0.9949 | 0.2786 | 3588.84 | 11,178,051 | 42.678 |
 | MobileNetV3 Large Pretrained | CNN Transfer Learning | 0.9914 | 0.9918 | 0.4396 | 2275.05 | 2,974,835 | 11.442 |
 | EfficientNet-B0 Pretrained | CNN Transfer Learning | 0.9928 | 0.9932 | 0.4424 | 2260.58 | 4,011,391 | 15.463 |
 | ResNet50 Pretrained | CNN Transfer Learning | 0.9959 | 0.9961 | 0.5290 | 1890.34 | 23,514,179 | 89.903 |
 | EfficientNet-B2 Pretrained | CNN Transfer Learning | 0.9938 | 0.9941 | 0.5408 | 1849.21 | 7,705,221 | 29.651 |
+| ViT-B/16 Pretrained | ViT Transfer Learning | 0.9968 | 0.9969 | 1.5236 | 656.32 | 85,800,963 | 327.305 |
+| Swin-T Pretrained | ViT Transfer Learning | 0.9973 | 0.9974 | 0.8609 | 1161.54 | 27,521,661 | 105.207 |
+| Swin V2-S Pretrained | ViT Transfer Learning | 0.9962 | 0.9963 | 2.1057 | 474.91 | 48,970,749 | 187.600 |
 
-*Note: A centralized benchmark notebook for standardized inference-cost evaluation across all models is planned. Metrics not yet benchmarked in the same environment are intentionally shown as `-`.*
+*Note: This table reports completed local artifact runs only. Implemented notebooks without completed local metrics, such as `40_06` to `40_11`, `50_04`, and `60_01` to `60_02`, are intentionally excluded until their artifacts are available. Metrics not yet benchmarked in the same environment are shown as `-`.*
 
-The strongest results so far come from **ImageNet-pretrained residual models**, with `ResNet50 Pretrained` achieving the best end-to-end result and `ResNet18 Pretrained` also performing exceptionally well while remaining much lighter. The earlier **fixed ResNet50 embedding** baseline remains extremely strong, showing that the dataset benefits heavily from pretrained visual representations. Among models trained from scratch, `CustomCNN v2` substantially improves over `CustomCNN v1`, while handcrafted baselines remain useful as interpretable references but are clearly outperformed by learned visual representations.
+The strongest completed result so far comes from the **Swin-T pretrained transformer**, which achieves **0.9973 test accuracy** and **0.9974 test macro F1** while remaining much lighter than ViT-B/16. Among pretrained CNNs, `ResNet50 Pretrained` remains the strongest CNN transfer-learning result, and `ResNet18 Pretrained` remains an excellent efficiency baseline. The earlier **fixed ResNet50 embedding** baseline remains extremely strong, showing that the dataset benefits heavily from pretrained visual representations. Among models trained from scratch, `CustomCNN v2` substantially improves over `CustomCNN v1`, while handcrafted baselines remain useful as interpretable references but are clearly outperformed by learned visual representations.
 
 ---
 
@@ -1031,6 +1226,15 @@ The repository already contains generated artifacts from preprocessing and train
 - `models/cnn_pretrained/resnet50_pretrained/run_20260403_114106/accuracy_curve.png`
 - `models/cnn_pretrained/efficientnet_b2_pretrained/run_20260403_121522/loss_curve.png`
 - `models/cnn_pretrained/efficientnet_b2_pretrained/run_20260403_121522/accuracy_curve.png`
+- `mlruns/511423962448650871/8296575d17d94d31b023f94ccd570c18/artifacts/checkpoint.pt`
+- `mlruns/511423962448650871/8296575d17d94d31b023f94ccd570c18/artifacts/loss_curve.png`
+- `mlruns/511423962448650871/8296575d17d94d31b023f94ccd570c18/artifacts/accuracy_curve.png`
+- `mlruns/511423962448650871/283051a05b77442c9c5f9740b50bdfde/artifacts/checkpoint.pt`
+- `mlruns/511423962448650871/283051a05b77442c9c5f9740b50bdfde/artifacts/loss_curve.png`
+- `mlruns/511423962448650871/283051a05b77442c9c5f9740b50bdfde/artifacts/accuracy_curve.png`
+- `mlruns/511423962448650871/880f01ae7f7c425d89f7c04775a33e5e/artifacts/checkpoint.pt`
+- `mlruns/511423962448650871/880f01ae7f7c425d89f7c04775a33e5e/artifacts/loss_curve.png`
+- `mlruns/511423962448650871/880f01ae7f7c425d89f7c04775a33e5e/artifacts/accuracy_curve.png`
 
 These artifacts support both qualitative inspection and reproducibility of the reported experiments.
 
@@ -1105,6 +1309,8 @@ AnimalClassification/
 └── README.md
 ```
 
+The compact tree above reflects the original skeleton view. The current expanded experiment set also includes `notebooks/40_cnn_pretrained/`, `notebooks/50_vit/`, `notebooks/60_vit_scratch/`, `src/models/cnn_pretrained/`, `src/models/vit/`, `src/models/vit_scratch/`, and `documentation/`.
+
 ---
 
 ## Notebook Roles
@@ -1141,6 +1347,12 @@ AnimalClassification/
 - **`40_03_efficientnet_b0_pretrained.ipynb`** - trains the EfficientNet-B0 transfer-learning baseline.
 - **`40_04_resnet50_pretrained.ipynb`** - trains the strongest residual transfer-learning baseline and provides direct comparison with the ResNet50 fixed-embedding family.
 - **`40_05_efficientnet_b2_pretrained.ipynb`** - trains the larger EfficientNet-B2 transfer-learning baseline.
+- **`40_06_convnext_small.ipynb`** - implements the ConvNeXt-Small modern ConvNet transfer-learning baseline.
+- **`40_07_resnext50_32x4d.ipynb`** - implements the ResNeXt-50 grouped-convolution residual transfer-learning baseline.
+- **`40_08_densenet121.ipynb`** - implements the DenseNet-121 densely connected transfer-learning baseline.
+- **`40_09_regnet_y_3_2gf.ipynb`** - implements the RegNetY-3.2GF design-space transfer-learning baseline.
+- **`40_10_regnet_y_8gf.ipynb`** - implements the higher-capacity RegNetY-8GF transfer-learning baseline.
+- **`40_11_efficientnet_v2_s.ipynb`** - implements the EfficientNetV2-S transfer-learning baseline.
 
 ### Pretrained ViT notebooks
 
@@ -1229,6 +1441,8 @@ Per-run trained model artifacts.
 - **`cnn_scratch/`** - checkpointed scratch CNN experiments with plots and metrics.
 - **`cnn_pretrained/`** - checkpointed transfer-learning experiments for ImageNet-pretrained CNN backbones.
 
+Some newer completed runs, especially the currently migrated pretrained ViT runs, are stored only in the MLflow artifact directories under `mlruns/`.
+
 ### `reports/`
 
 Saved metrics and figures.
@@ -1238,7 +1452,7 @@ Saved metrics and figures.
 
 ### `mlruns/`
 
-MLflow experiment tracking directory.
+MLflow experiment tracking directory. It contains completed run metadata, parameters, metrics, and run-scoped artifacts for the benchmarked models, including the migrated Phase 5 pretrained ViT runs.
 
 ### `notebooks/`
 
@@ -1321,7 +1535,8 @@ Planned next steps include:
 - standardized inference timing under one shared environment
 - additional metrics such as F2 score, specificity, and per-class sensitivity
 - hardware-aware reporting (GPU model, VRAM, RAM, CPU/GPU timing)
-- completion of remaining model families beyond the current baselines, especially transformer-based image models
+- training and exporting artifacts for implemented-but-pending models such as the expanded CNN family, MaxViT-T, and scratch ViT baselines
+- optional MLOps simulation with a lightweight inference API, synthetic request traffic, prediction logging, and monitoring dashboards
 - improved ONNX export support by adding missing export dependencies
 
 ---
