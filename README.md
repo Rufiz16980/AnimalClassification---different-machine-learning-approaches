@@ -6,7 +6,7 @@
 ![Scikit-Learn](https://img.shields.io/badge/scikit--learn-1.8.0-green)
 ![Scikit-Image](https://img.shields.io/badge/scikit--image-0.26.0-teal)
 ![MLflow](https://img.shields.io/badge/MLflow-3.10.0-purple)
-![Status](https://img.shields.io/badge/status-work_in_progress-yellow)
+![Status](https://img.shields.io/badge/status-completed-brightgreen)
 
 A structured experimental pipeline for **animal image classification** comparing:
 
@@ -20,6 +20,23 @@ A structured experimental pipeline for **animal image classification** comparing
 The goal of this project is to **systematically benchmark different modeling strategies** under a shared dataset split and transformation pipeline.
 
 The repository is designed to be **reproducible, modular, and experiment-tracked**, allowing fair comparisons between approaches. The project benchmarks handcrafted-feature pipelines, pretrained deep-feature extraction, convolutional neural networks trained from scratch, and pretrained CNN transfer-learning models on a common three-class dataset consisting of **cats, dogs, and wildlife** images.
+
+---
+
+# Table of Contents
+
+- [Overview](#overview)
+- [Dataset](#dataset)
+- [Experiment Tracking](#experiment-tracking)
+- [Models Implemented](#models-implemented)
+- [Pretrained CNN Transfer Learning](#4---pretrained-cnn-transfer-learning)
+- [Pretrained Vision Transformer Transfer Learning](#5---pretrained-vision-transformer-transfer-learning)
+- [Vision Transformers From Scratch](#6---vision-transformers-from-scratch)
+- [Experimental Results](#experimental-results)
+- [Current Stored Figures and Artifacts](#current-stored-figures-and-artifacts)
+- [Loss Curve Snapshot](#loss-curve-snapshot)
+- [Project Structure](#project-structure)
+- [Hardware](#hardware)
 
 ---
 
@@ -1399,6 +1416,42 @@ The repository already contains generated artifacts from preprocessing and train
 - `models/vit_scratch/customvit_v2/run_20260505_111414/accuracy_curve.png`
 
 These artifacts support both qualitative inspection and reproducibility of the reported experiments.
+
+---
+
+## Loss Curve Snapshot
+
+The six loss curves below summarize representative training behavior across moderate, strong, and best-performing neural models.
+
+### Moderate-Performing Models
+
+**CustomCNN v1** reaches a respectable scratch-trained baseline, but the validation curve settles higher than the stronger transfer-learning models. The gap shows the expected limit of a small CNN trained without external pretraining.
+
+![CustomCNN v1 loss curve](models/cnn_scratch/customcnn_v1/run_20260313_095856/loss_curve.png)
+
+**CustomViT v2** improves over the smaller scratch ViT and learns steadily, but its loss remains clearly above the pretrained families. This highlights how Vision Transformers benefit strongly from large-scale pretraining.
+
+![CustomViT v2 loss curve](models/vit_scratch/customvit_v2/run_20260505_111414/loss_curve.png)
+
+### Strong-Performing Models
+
+**ResNet18 Pretrained** converges quickly and maintains a low validation loss while staying relatively small and fast. It is one of the best efficiency-oriented baselines in the benchmark.
+
+![ResNet18 pretrained loss curve](models/cnn_pretrained/resnet18_pretrained/run_20260403_103808/loss_curve.png)
+
+**ResNet50 Pretrained** achieves lower final loss than the smaller CNN baselines and remains the strongest pretrained CNN result. The curve reflects the value of deeper residual ImageNet features for this dataset.
+
+![ResNet50 pretrained loss curve](models/cnn_pretrained/resnet50_pretrained/run_20260403_114106/loss_curve.png)
+
+### Best-Performing Models
+
+**Swin-T Pretrained** reaches very low loss while remaining lighter than ViT-B/16. The curve supports the benchmark result where Swin-T is both accurate and efficient among transformer-family models.
+
+![Swin-T pretrained loss curve](models/vit/swin_t/run_20260427_110425/loss_curve.png)
+
+**MaxViT-T Pretrained** gives the strongest final benchmark score. Its loss curve stays in the same low-loss regime as the best transformer models, matching its top test macro F1 result.
+
+![MaxViT-T pretrained loss curve](models/vit/maxvit_t/run_20260429_095644/loss_curve.png)
 
 ---
 
