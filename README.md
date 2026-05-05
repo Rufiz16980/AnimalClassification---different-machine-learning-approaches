@@ -211,8 +211,7 @@ config.json
 
 # Models Implemented
 
-This project currently includes the following implemented and benchmarked model families and concrete model variants.
-Rows marked as pending are implemented in code/notebooks but do not yet have completed result artifacts in the local repository.
+This project includes the following implemented and benchmarked model families and concrete model variants.
 
 ## Classical ML with Handcrafted Features
 - [HOG + Approximate RBF SVM (`10_01_hog_svm`)](#hog--approximate-rbf-svm)
@@ -234,22 +233,16 @@ Rows marked as pending are implemented in code/notebooks but do not yet have com
 - [EfficientNet-B0 Pretrained (`40_03_efficientnet_b0_pretrained`)](#efficientnet-b0-pretrained)
 - [ResNet50 Pretrained (`40_04_resnet50_pretrained`)](#resnet50-pretrained)
 - [EfficientNet-B2 Pretrained (`40_05_efficientnet_b2_pretrained`)](#efficientnet-b2-pretrained)
-- `40_06_convnext_small` - implemented, results pending
-- `40_07_resnext50_32x4d` - implemented, results pending
-- `40_08_densenet121` - implemented, results pending
-- `40_09_regnet_y_3_2gf` - implemented, results pending
-- `40_10_regnet_y_8gf` - implemented, results pending
-- `40_11_efficientnet_v2_s` - implemented, results pending
 
 ## Pretrained Vision Transformers
 - [ViT-B/16 Pretrained (`50_01_vit_b_16`)](#vit-b16-pretrained)
 - [Swin-T Pretrained (`50_02_swin_t`)](#swin-t-pretrained)
 - [Swin V2-S Pretrained (`50_03_swin_v2_s`)](#swin-v2-s-pretrained)
-- `50_04_maxvit_t` - implemented, results pending
+- [MaxViT-T Pretrained (`50_04_maxvit_t`)](#maxvit-t-pretrained)
 
 ## Vision Transformers From Scratch
-- `60_01_customvit_v1` - implemented, results pending
-- `60_02_customvit_v2` - implemented, results pending
+- [CustomViT v1 (`60_01_customvit_v1`)](#customvit-v1)
+- [CustomViT v2 (`60_02_customvit_v2`)](#customvit-v2)
 
 ---
 
@@ -990,7 +983,7 @@ Shared training recipe:
 | Seed | 42 |
 | Device in completed runs | CUDA |
 
-The completed Phase 5 runs are currently stored under `mlruns/` rather than mirrored into top-level `models/vit/` directories.
+The completed Phase 5 runs are stored under both `models/vit/` and MLflow artifacts.
 
 ---
 
@@ -1017,6 +1010,7 @@ Model size:
 
 Best validation result:
 
+- **Best epoch:** 13
 - **Best validation loss:** 0.0197
 - **Best validation macro F1:** 0.9977
 
@@ -1034,7 +1028,7 @@ Inference benchmark:
 Artifacts saved to:
 
 ```
-mlruns/511423962448650871/8296575d17d94d31b023f94ccd570c18/artifacts/
+models/vit/vit_b_16/run_20260427_102658/
 - checkpoint.pt
 - config.json
 - metrics.json
@@ -1067,6 +1061,7 @@ Model size:
 
 Best validation result:
 
+- **Best epoch:** 9
 - **Best validation loss:** 0.0141
 - **Best validation macro F1:** 0.9982
 
@@ -1084,7 +1079,7 @@ Inference benchmark:
 Artifacts saved to:
 
 ```
-mlruns/511423962448650871/283051a05b77442c9c5f9740b50bdfde/artifacts/
+models/vit/swin_t/run_20260427_110425/
 - checkpoint.pt
 - config.json
 - metrics.json
@@ -1117,6 +1112,7 @@ Model size:
 
 Best validation result:
 
+- **Best epoch:** 4
 - **Best validation loss:** 0.0132
 - **Best validation macro F1:** 0.9978
 
@@ -1134,7 +1130,7 @@ Inference benchmark:
 Artifacts saved to:
 
 ```
-mlruns/511423962448650871/880f01ae7f7c425d89f7c04775a33e5e/artifacts/
+models/vit/swin_v2_s/run_20260427_112808/
 - checkpoint.pt
 - config.json
 - metrics.json
@@ -1146,7 +1142,180 @@ mlruns/511423962448650871/880f01ae7f7c425d89f7c04775a33e5e/artifacts/
 
 ## MaxViT-T Pretrained
 
-`50_04_maxvit_t` is implemented in the pretrained ViT notebook family and model factory, but no completed local result artifact is currently present. It remains a pending benchmark run.
+Architecture summary:
+
+- ImageNet-pretrained `torchvision` MaxViT-T
+- hybrid convolution-attention backbone with local and grid attention
+- original classifier replaced with a 3-class head
+- input image size: 224
+- evaluation transform: resize 224, ImageNet normalization
+
+Weights:
+
+- `IMAGENET1K_V1`
+
+Model size:
+
+```
+30,409,163 parameters
+~116.59 MB
+```
+
+Best validation result:
+
+- **Best epoch:** 15
+- **Best validation loss:** 0.0188
+- **Best validation macro F1:** 0.9978
+
+Test result:
+
+- **Test loss:** 0.0182
+- **Test accuracy:** 0.9974
+- **Test macro F1:** 0.9976
+
+Inference benchmark:
+
+- **Latency per image:** 1.3636 ms
+- **Throughput:** 733.37 images/sec
+
+Artifacts saved to:
+
+```
+models/vit/maxvit_t/run_20260429_095644/
+- checkpoint.pt
+- config.json
+- metrics.json
+- loss_curve.png
+- accuracy_curve.png
+```
+
+---
+
+# 6 - Vision Transformers From Scratch
+
+Phase 6 completes the original benchmark plan by adding educational Vision Transformer models implemented directly in PyTorch.
+
+Unlike the pretrained ViT family, these models start from random initialization and are trained end-to-end on `split_v1`. They are intentionally smaller than ImageNet-pretrained ViT backbones so they remain practical for course-focused experimentation while still exposing the main Transformer building blocks.
+
+Both custom ViTs use:
+
+- patch embedding with 16x16 image patches
+- a learnable class token
+- learnable positional embeddings
+- stacked Transformer encoder blocks
+- multi-head self-attention
+- MLP feed-forward blocks
+- layer normalization and dropout
+- a final classification head for 3 animal classes
+
+The scratch-ViT notebooks follow the same rerun-safe artifact contract used by the scratch CNN and transfer-learning notebooks:
+
+- deterministic run directories
+- checkpoint saving
+- config and metrics export
+- loss and accuracy curves
+- MLflow tracking
+- latency and throughput benchmarking
+
+---
+
+## CustomViT v1
+
+Architecture summary:
+
+- encoder-only Vision Transformer from scratch
+- image size: 224
+- patch size: 16
+- embedding dimension: 192
+- encoder depth: 6
+- attention heads: 3
+- MLP ratio: 4.0
+- dropout: 0.1
+
+Model size:
+
+```
+2,855,811 parameters
+~10.89 MB
+```
+
+Best validation result:
+
+- **Best epoch:** 39
+- **Best validation loss:** 0.1617
+- **Best validation macro F1:** 0.9424
+
+Test result:
+
+- **Test loss:** 0.1639
+- **Test accuracy:** 0.9417
+- **Test macro F1:** 0.9449
+
+Inference benchmark:
+
+- **Latency per image:** 0.2587 ms
+- **Throughput:** 3865.15 images/sec
+
+Artifacts saved to:
+
+```
+models/vit_scratch/customvit_v1/run_20260505_102351/
+- checkpoint.pt
+- config.json
+- metrics.json
+- loss_curve.png
+- accuracy_curve.png
+```
+
+---
+
+## CustomViT v2
+
+Architecture summary:
+
+- larger encoder-only Vision Transformer from scratch
+- image size: 224
+- patch size: 16
+- embedding dimension: 256
+- encoder depth: 8
+- attention heads: 8
+- MLP ratio: 4.0
+- dropout: 0.1
+
+Model size:
+
+```
+6,566,915 parameters
+~25.05 MB
+```
+
+Best validation result:
+
+- **Best epoch:** 50
+- **Best validation loss:** 0.1275
+- **Best validation macro F1:** 0.9570
+
+Test result:
+
+- **Test loss:** 0.1445
+- **Test accuracy:** 0.9489
+- **Test macro F1:** 0.9523
+
+Inference benchmark:
+
+- **Latency per image:** 0.4416 ms
+- **Throughput:** 2264.60 images/sec
+
+Artifacts saved to:
+
+```
+models/vit_scratch/customvit_v2/run_20260505_111414/
+- checkpoint.pt
+- config.json
+- metrics.json
+- loss_curve.png
+- accuracy_curve.png
+```
 
 ---
 
@@ -1169,10 +1338,13 @@ mlruns/511423962448650871/880f01ae7f7c425d89f7c04775a33e5e/artifacts/
 | ViT-B/16 Pretrained | ViT Transfer Learning | 0.9968 | 0.9969 | 1.5236 | 656.32 | 85,800,963 | 327.305 |
 | Swin-T Pretrained | ViT Transfer Learning | 0.9973 | 0.9974 | 0.8609 | 1161.54 | 27,521,661 | 105.207 |
 | Swin V2-S Pretrained | ViT Transfer Learning | 0.9962 | 0.9963 | 2.1057 | 474.91 | 48,970,749 | 187.600 |
+| MaxViT-T Pretrained | ViT Transfer Learning | 0.9974 | 0.9976 | 1.3636 | 733.37 | 30,409,163 | 116.587 |
+| CustomViT v1 | ViT from Scratch | 0.9417 | 0.9449 | 0.2587 | 3865.15 | 2,855,811 | 10.894 |
+| CustomViT v2 | ViT from Scratch | 0.9489 | 0.9523 | 0.4416 | 2264.60 | 6,566,915 | 25.051 |
 
-*Note: This table reports completed local artifact runs only. Implemented notebooks without completed local metrics, such as `40_06` to `40_11`, `50_04`, and `60_01` to `60_02`, are intentionally excluded until their artifacts are available. Metrics not yet benchmarked in the same environment are shown as `-`.*
+*Note: This table reports the completed benchmark runs available in the local repository. Metrics not applicable to the classical pipelines are shown as `-`.*
 
-The strongest completed result so far comes from the **Swin-T pretrained transformer**, which achieves **0.9973 test accuracy** and **0.9974 test macro F1** while remaining much lighter than ViT-B/16. Among pretrained CNNs, `ResNet50 Pretrained` remains the strongest CNN transfer-learning result, and `ResNet18 Pretrained` remains an excellent efficiency baseline. The earlier **fixed ResNet50 embedding** baseline remains extremely strong, showing that the dataset benefits heavily from pretrained visual representations. Among models trained from scratch, `CustomCNN v2` substantially improves over `CustomCNN v1`, while handcrafted baselines remain useful as interpretable references but are clearly outperformed by learned visual representations.
+The strongest completed result comes from **MaxViT-T Pretrained**, which achieves **0.9974 test accuracy** and **0.9976 test macro F1**. `Swin-T Pretrained` is extremely close while being lighter and faster than ViT-B/16. Among pretrained CNNs, `ResNet50 Pretrained` remains the strongest CNN transfer-learning result, and `ResNet18 Pretrained` remains an excellent efficiency baseline. The earlier **fixed ResNet50 embedding** baseline remains extremely strong, showing that the dataset benefits heavily from pretrained visual representations. Among models trained from scratch, `CustomCNN v2` is the strongest scratch CNN, while `CustomViT v2` improves over `CustomViT v1` but does not outperform the scratch CNN family.
 
 ---
 
@@ -1182,27 +1354,9 @@ The strongest completed result so far comes from the **Swin-T pretrained transfo
 
 ---
 
-# Example Predictions
+## Scratch ViT Comparison
 
-Prediction examples stored in:
-
-```
-docs/images/predictions/
-```
-
-Example output:
-
-```
-cat_01_pred.png
-dog_04_pred.png
-wildlife_03_pred.png
-```
-
-Each example shows:
-
-- input image
-- predicted class
-- model confidence
+`CustomViT v2` improves over `CustomViT v1` by increasing embedding dimension from **192** to **256**, encoder depth from **6** to **8**, and attention heads from **3** to **8**. This increases parameter count from **2,855,811** to **6,566,915** and raises test macro F1 from **0.9449** to **0.9523**. The result is educationally useful because it demonstrates the effect of scaling Transformer capacity from scratch, while also showing that convolutional inductive bias remains valuable on this dataset when pretraining is not used.
 
 ---
 
@@ -1210,7 +1364,6 @@ Each example shows:
 
 The repository already contains generated artifacts from preprocessing and training runs, including:
 
-- `reports/figures/class_distribution.png`
 - `reports/figures/sample_augmented_images.png`
 - `models/cnn_scratch/customcnn_v1/run_20260313_095856/loss_curve.png`
 - `models/cnn_scratch/customcnn_v1/run_20260313_095856/accuracy_curve.png`
@@ -1226,15 +1379,24 @@ The repository already contains generated artifacts from preprocessing and train
 - `models/cnn_pretrained/resnet50_pretrained/run_20260403_114106/accuracy_curve.png`
 - `models/cnn_pretrained/efficientnet_b2_pretrained/run_20260403_121522/loss_curve.png`
 - `models/cnn_pretrained/efficientnet_b2_pretrained/run_20260403_121522/accuracy_curve.png`
-- `mlruns/511423962448650871/8296575d17d94d31b023f94ccd570c18/artifacts/checkpoint.pt`
-- `mlruns/511423962448650871/8296575d17d94d31b023f94ccd570c18/artifacts/loss_curve.png`
-- `mlruns/511423962448650871/8296575d17d94d31b023f94ccd570c18/artifacts/accuracy_curve.png`
-- `mlruns/511423962448650871/283051a05b77442c9c5f9740b50bdfde/artifacts/checkpoint.pt`
-- `mlruns/511423962448650871/283051a05b77442c9c5f9740b50bdfde/artifacts/loss_curve.png`
-- `mlruns/511423962448650871/283051a05b77442c9c5f9740b50bdfde/artifacts/accuracy_curve.png`
-- `mlruns/511423962448650871/880f01ae7f7c425d89f7c04775a33e5e/artifacts/checkpoint.pt`
-- `mlruns/511423962448650871/880f01ae7f7c425d89f7c04775a33e5e/artifacts/loss_curve.png`
-- `mlruns/511423962448650871/880f01ae7f7c425d89f7c04775a33e5e/artifacts/accuracy_curve.png`
+- `models/vit/vit_b_16/run_20260427_102658/checkpoint.pt`
+- `models/vit/vit_b_16/run_20260427_102658/loss_curve.png`
+- `models/vit/vit_b_16/run_20260427_102658/accuracy_curve.png`
+- `models/vit/swin_t/run_20260427_110425/checkpoint.pt`
+- `models/vit/swin_t/run_20260427_110425/loss_curve.png`
+- `models/vit/swin_t/run_20260427_110425/accuracy_curve.png`
+- `models/vit/swin_v2_s/run_20260427_112808/checkpoint.pt`
+- `models/vit/swin_v2_s/run_20260427_112808/loss_curve.png`
+- `models/vit/swin_v2_s/run_20260427_112808/accuracy_curve.png`
+- `models/vit/maxvit_t/run_20260429_095644/checkpoint.pt`
+- `models/vit/maxvit_t/run_20260429_095644/loss_curve.png`
+- `models/vit/maxvit_t/run_20260429_095644/accuracy_curve.png`
+- `models/vit_scratch/customvit_v1/run_20260505_102351/checkpoint.pt`
+- `models/vit_scratch/customvit_v1/run_20260505_102351/loss_curve.png`
+- `models/vit_scratch/customvit_v1/run_20260505_102351/accuracy_curve.png`
+- `models/vit_scratch/customvit_v2/run_20260505_111414/checkpoint.pt`
+- `models/vit_scratch/customvit_v2/run_20260505_111414/loss_curve.png`
+- `models/vit_scratch/customvit_v2/run_20260505_111414/accuracy_curve.png`
 
 These artifacts support both qualitative inspection and reproducibility of the reported experiments.
 
@@ -1244,72 +1406,48 @@ These artifacts support both qualitative inspection and reproducibility of the r
 
 ```
 AnimalClassification/
-│
-├── configs/
-│   └── transforms_v1.yaml
-│
-├── data/
-│   ├── prepared/
-│   ├── processed/
-│   │   ├── features/
-│   │   └── embeddings/
-│   └── splits/
-│       └── split_v1/
-│
-├── docs/
-│   └── images/
-│
-├── mlruns/
-│
-├── models/
-│   ├── ml_basic_features/
-│   ├── ml_deep_features/
-│   └── cnn_scratch/
-│
-├── notebooks/
-│   ├── 00_project_setup.ipynb
-│   ├── 01_data_prep_and_splits.ipynb
-│   ├── 02_transforms_and_augmentation.ipynb
-│   ├── 10_ml_basic_features/
-│   │   ├── 10_01_hog_svm.ipynb
-│   │   ├── 10_02_lbp_svm.ipynb
-│   │   └── 10_03_colorhist_lr.ipynb
-│   ├── 20_ml_deep_features_fixed_encoder/
-│   │   ├── 20_01_extract_embeddings_resnet50.ipynb
-│   │   ├── 20_02_lr_on_embeddings.ipynb
-│   │   └── 20_03_svm_on_embeddings.ipynb
-│   └── 30_cnn_scratch_custom/
-│       ├── 30_00_overview.ipynb
-│       ├── 30_01_customcnn_v1.ipynb
-│       └── 30_02_customcnn_v2.ipynb
-│
-├── scripts/
-│   ├── dataset_check.py
-│   ├── dedup_delete.py
-│   ├── huggin_face_dataset_downloader.py
-│   └── prepare_data.py
-│
-├── src/
-│   ├── data/
-│   │   ├── __init__.py
-│   │   ├── dataset_loader.py
-│   │   ├── split_generator.py
-│   │   └── transforms.py
-│   └── models/
-│       └── cnn_scratch/
-│           ├── __init__.py
-│           ├── models.py
-│           └── utils.py
-│
-├── reports/
-│   ├── metrics/
-│   └── figures/
-│
-├── requirements.txt
-└── README.md
+|-- configs/
+|   `-- transforms_v1.yaml
+|-- data/
+|   |-- prepared/
+|   |-- processed/
+|   |   |-- features/
+|   |   `-- embeddings/
+|   `-- splits/
+|       `-- split_v1/
+|-- documentation/
+|-- mlruns/
+|-- models/
+|   |-- ml_basic_features/
+|   |-- ml_deep_features/
+|   |-- cnn_scratch/
+|   |-- cnn_pretrained/
+|   |-- vit/
+|   `-- vit_scratch/
+|-- notebooks/
+|   |-- 00_project_setup.ipynb
+|   |-- 01_data_prep_and_splits.ipynb
+|   |-- 02_transforms_and_augmentation.ipynb
+|   |-- 10_ml_basic_features/
+|   |-- 20_ml_deep_features_fixed_encoder/
+|   |-- 30_cnn_scratch_custom/
+|   |-- 40_cnn_pretrained/
+|   |-- 50_vit/
+|   `-- 60_vit_scratch/
+|-- reports/
+|   |-- figures/
+|   `-- metrics/
+|-- scripts/
+|-- src/
+|   |-- data/
+|   `-- models/
+|       |-- cnn_scratch/
+|       |-- cnn_pretrained/
+|       |-- vit/
+|       `-- vit_scratch/
+|-- requirements.txt
+`-- README.md
 ```
-
-The compact tree above reflects the original skeleton view. The current expanded experiment set also includes `notebooks/40_cnn_pretrained/`, `notebooks/50_vit/`, `notebooks/60_vit_scratch/`, `src/models/cnn_pretrained/`, `src/models/vit/`, `src/models/vit_scratch/`, and `documentation/`.
 
 ---
 
@@ -1347,12 +1485,6 @@ The compact tree above reflects the original skeleton view. The current expanded
 - **`40_03_efficientnet_b0_pretrained.ipynb`** - trains the EfficientNet-B0 transfer-learning baseline.
 - **`40_04_resnet50_pretrained.ipynb`** - trains the strongest residual transfer-learning baseline and provides direct comparison with the ResNet50 fixed-embedding family.
 - **`40_05_efficientnet_b2_pretrained.ipynb`** - trains the larger EfficientNet-B2 transfer-learning baseline.
-- **`40_06_convnext_small.ipynb`** - implements the ConvNeXt-Small modern ConvNet transfer-learning baseline.
-- **`40_07_resnext50_32x4d.ipynb`** - implements the ResNeXt-50 grouped-convolution residual transfer-learning baseline.
-- **`40_08_densenet121.ipynb`** - implements the DenseNet-121 densely connected transfer-learning baseline.
-- **`40_09_regnet_y_3_2gf.ipynb`** - implements the RegNetY-3.2GF design-space transfer-learning baseline.
-- **`40_10_regnet_y_8gf.ipynb`** - implements the higher-capacity RegNetY-8GF transfer-learning baseline.
-- **`40_11_efficientnet_v2_s.ipynb`** - implements the EfficientNetV2-S transfer-learning baseline.
 
 ### Pretrained ViT notebooks
 
@@ -1440,8 +1572,8 @@ Per-run trained model artifacts.
 - **`ml_deep_features/`** - classifiers trained on cached deep embeddings.
 - **`cnn_scratch/`** - checkpointed scratch CNN experiments with plots and metrics.
 - **`cnn_pretrained/`** - checkpointed transfer-learning experiments for ImageNet-pretrained CNN backbones.
-
-Some newer completed runs, especially the currently migrated pretrained ViT runs, are stored only in the MLflow artifact directories under `mlruns/`.
+- **`vit/`** - checkpointed transfer-learning experiments for pretrained ViT-family backbones.
+- **`vit_scratch/`** - checkpointed custom ViT-from-scratch experiments.
 
 ### `reports/`
 
@@ -1452,7 +1584,7 @@ Saved metrics and figures.
 
 ### `mlruns/`
 
-MLflow experiment tracking directory. It contains completed run metadata, parameters, metrics, and run-scoped artifacts for the benchmarked models, including the migrated Phase 5 pretrained ViT runs.
+MLflow experiment tracking directory. It contains completed run metadata, parameters, metrics, and run-scoped artifacts for the benchmarked models.
 
 ### `notebooks/`
 
@@ -1465,19 +1597,10 @@ Phase-organized experiment notebooks covering setup, preprocessing, classical ML
 Observed training environment in the provided experiment runs:
 
 - **CUDA GPU available**
-- Scratch CNN training notebooks ran on **GPU**
-- Data loading used:
-  - `batch_size = 64`
-  - `num_workers = 8`
-  - `pin_memory = True`
-
-A future centralized benchmark notebook will report standardized hardware metadata for all evaluated models, including:
-
-- device used for timing
-- GPU name
-- GPU memory
-- system RAM
-- CPU/GPU inference comparisons where applicable
+- neural model training and inference benchmarking ran on **GPU**
+- batch sizes vary by model family and memory requirements
+- runtime artifacts record the selected device, parameter count, model size, latency, and throughput where applicable
+- the migration workflow supports separate Windows and Linux machines by relying on repository-relative paths and saved artifacts
 
 ---
 
@@ -1529,13 +1652,12 @@ This project was developed using the computational resources provided by **CeDAR
 
 # Future Work
 
-Planned next steps include:
+Possible extensions beyond the completed benchmark include:
 
 - centralized benchmark notebook covering all trained models
 - standardized inference timing under one shared environment
 - additional metrics such as F2 score, specificity, and per-class sensitivity
 - hardware-aware reporting (GPU model, VRAM, RAM, CPU/GPU timing)
-- training and exporting artifacts for implemented-but-pending models such as the expanded CNN family, MaxViT-T, and scratch ViT baselines
 - optional MLOps simulation with a lightweight inference API, synthetic request traffic, prediction logging, and monitoring dashboards
 - improved ONNX export support by adding missing export dependencies
 
@@ -1543,6 +1665,4 @@ Planned next steps include:
 
 # Status
 
-This project is currently **in active development**.
-
-Additional models and benchmarking results will be added as experiments complete.
+This project currently contains completed local artifacts for the reported benchmark families: handcrafted classical ML, fixed deep features, scratch CNNs, pretrained CNN transfer learning, pretrained ViT transfer learning, and custom ViTs from scratch.
